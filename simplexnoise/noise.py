@@ -1,27 +1,24 @@
 from __future__ import division
 import math
 import random
-from geometry import Point
+from simplexnoise.geometry import Point
 
 # Constants to avoid magic numbers
 DEFAULT_NOISE_SCALE = -1  # Check noise_scale against this
 DEFAULT_1D_NOISE_SCALE = 0.188
 DEFAULT_2D_NOISE_SCALE = 70.0
-DEFAULT_3D_NOISE_SCALE = 32.0
 DEFAULT_LACUNARITY = 2.0
 DEFAULT_GAIN = 0.65
-DIMENSIONS_2D = 2
-DIMENSIONS_3D = 3
 DEFAULT_SHUFFLES = 100
 
 
 def normalize(x):
-    res = (1.0 + x) / 2.0
+    res = x#(1.0 + x) / 2.0
 
     # Clamp the result, this is not ideal
-    if res > 1:
+    if res > 0.5:
         res = 1
-    if res < 0:
+    if res < 0.5:
         res = 0
 
     return res
@@ -41,17 +38,19 @@ class PerlinNoise(object):
         else:
             self.noise_scale = noise_scale
 
-        self.octaves = [PerlinNoiseOctave() for i in xrange(self.num_octaves)]
-        self.frequencies = [1.0 / pow(2, i) for i in xrange(self.num_octaves)]
+        self.octaves = [PerlinNoiseOctave() for i in range(self.num_octaves)]
+        self.frequencies = [1.0 / pow(2, i) for i in range(self.num_octaves)]
         self.amplitudes = [pow(persistence, len(self.octaves) - i)
-                           for i in xrange(self.num_octaves)]
+                           for i in 
+                range(self.num_octaves)]
 
     def noise(self, x):
         noise = [
             self.octaves[i].noise(
                 xin=x * self.frequencies[i],
                 noise_scale=self.noise_scale
-            ) * self.amplitudes[i] for i in xrange(self.num_octaves)]
+            ) * self.amplitudes[i] for i in 
+range(self.num_octaves)]
 
         return sum(noise)
 
@@ -61,7 +60,7 @@ class PerlinNoise(object):
         frequency = 1.0 / hgrid
         amplitude = gain
 
-        for i in xrange(self.num_octaves):
+        for i in range(self.num_octaves):
             noise.append(
                 self.octaves[i].noise(
                     xin=x * frequency,
@@ -78,9 +77,9 @@ class PerlinNoise(object):
 class PerlinNoiseOctave(object):
 
     def __init__(self, num_shuffles=DEFAULT_SHUFFLES):
-        self.p_supply = [i for i in xrange(0, 256)]
+        self.p_supply = [i for i in range(0, 256)]
 
-        for i in xrange(num_shuffles):
+        for i in range(num_shuffles):
             random.shuffle(self.p_supply)
 
         self.perm = self.p_supply * 2
@@ -115,55 +114,40 @@ class PerlinNoiseOctave(object):
 
 class SimplexNoise(object):
 
-    def __init__(self, num_octaves, persistence, dimensions, noise_scale=DEFAULT_NOISE_SCALE):
+    def __init__(self, num_octaves, persistence, noise_scale=DEFAULT_NOISE_SCALE):
         self.num_octaves = num_octaves
-        dimensions = int(dimensions)
 
-        if DIMENSIONS_2D == dimensions:
-            self.octaves = [SimplexNoiseOctave2D()
-                            for i in xrange(self.num_octaves)]
-            self.noise_scale = DEFAULT_2D_NOISE_SCALE
-
-        elif DIMENSIONS_3D == dimensions:
-            self.octaves = [SimplexNoiseOctave3D()
-                            for i in xrange(self.num_octaves)]
-            self.noise_scale = DEFAULT_2D_NOISE_SCALE
-
-        else:
-            raise ArgumentError(
-                'Please supply the dimensions of noise generation (2 or 3)'
-            )
+        self.octaves = [SimplexNoiseOctave() for i in range(self.num_octaves)]
+        self.noise_scale = DEFAULT_2D_NOISE_SCALE
 
         if DEFAULT_NOISE_SCALE != noise_scale:
             self.noise_scale = noise_scale
 
-        self.frequencies = [pow(2, i) for i in xrange(self.num_octaves)]
+        self.frequencies = [pow(2, i) for i in range(self.num_octaves)]
         self.amplitudes = [pow(persistence, len(self.octaves) - i)
-                           for i in xrange(self.num_octaves)]
+                           for i in range(self.num_octaves)]
 
-    def noise(self, x=0, y=0, z=0):
+    def noise(self, x=0, y=0):
         noise = [
             self.octaves[i].noise(
                 xin=x / self.frequencies[i],
                 yin=y / self.frequencies[i],
-                zin=z / self.frequencies[i],
                 noise_scale=self.noise_scale
-            ) * self.amplitudes[i] for i in xrange(self.num_octaves)]
+            ) * self.amplitudes[i] for i in range(self.num_octaves)]
 
         return sum(noise)
 
-    def fractal(self, x=0, y=0, z=0, hgrid=0, lacunarity=DEFAULT_LACUNARITY, gain=DEFAULT_GAIN):
+    def fractal(self, x=0, y=0, hgrid=0, lacunarity=DEFAULT_LACUNARITY, gain=DEFAULT_GAIN):
         """ A more refined approach but has a much slower run time """
         noise = []
         frequency = 1.0 / hgrid
         amplitude = gain
 
-        for i in xrange(self.num_octaves):
+        for i in range(self.num_octaves):
             noise.append(
                 self.octaves[i].noise(
                     xin=x * frequency,
                     yin=y * frequency,
-                    zin=z * frequency,
                     noise_scale=self.noise_scale
                 ) * amplitude
             )
@@ -174,7 +158,7 @@ class SimplexNoise(object):
         return sum(noise)
 
 
-class SimplexNoiseOctave2D(object):
+class SimplexNoiseOctave(object):
 
     # These allow us to skew (x,y) space and determine which simplex we are in
     # and then return to (x,y) space
@@ -182,7 +166,7 @@ class SimplexNoiseOctave2D(object):
     unskew_factor = (3.0 - math.sqrt(3.0)) / 6.0
 
     def __init__(self, num_shuffles=DEFAULT_SHUFFLES):
-        self.p_supply = [i for i in xrange(0, 256)]
+        self.p_supply = [i for i in range(0, 256)]
 
         self.grads = [
             Point(1, 1, 0),
@@ -191,13 +175,13 @@ class SimplexNoiseOctave2D(object):
             Point(-1, -1, 0)
         ]
 
-        for i in xrange(num_shuffles):
+        for i in range(num_shuffles):
             random.shuffle(self.p_supply)
 
         self.perm = self.p_supply * 2
         self.perm_mod_4 = [i % 4 for i in self.perm]
 
-    def noise(self, xin, yin, zin, noise_scale):
+    def noise(self, xin, yin, noise_scale):
         # Point lists
         points_xy = []
         points_ij = []
@@ -277,7 +261,7 @@ class SimplexNoiseOctave2D(object):
     def calc_noise_contributions(self, grad_index_hash, points_xy):
         """ Calculates the contribution from each corner (in 2D there are three!) """
         contribs = []
-        for i in xrange(len(grad_index_hash)):
+        for i in range(len(grad_index_hash)):
             x = points_xy[i].x
             y = points_xy[i].y
             grad = self.grads[grad_index_hash[i]]
@@ -288,141 +272,5 @@ class SimplexNoiseOctave2D(object):
             else:
                 t *= t
                 contribs.append(t * t * grad.dot(x, y, 0))
-
-        return contribs
-
-
-class SimplexNoiseOctave3D(object):
-    # These allow us to skew (x,y) space and determine which simplex we are in
-    # and then return to (x,y) space
-    skew_factor = 1.0 / 3.0
-    unskew_factor = 1.0 / 6.0
-
-    def __init__(self, num_shuffles=DEFAULT_SHUFFLES):
-        self.p_supply = [i for i in xrange(0, 256)]
-
-        self.grads = [
-            Point(1, 1, 0), Point(-1, 1, 0), Point(1, -1, 0), Point(-1, -1, 0),
-            Point(1, 0, 1), Point(-1, 0, 1), Point(1, 0, -1), Point(-1, 0, -1),
-            Point(0, 1, 1), Point(0, -1, 1), Point(0, 1, -1), Point(0, -1, -1),
-        ]
-
-        for i in xrange(num_shuffles):
-            random.shuffle(self.p_supply)
-
-        self.perm = self.p_supply * 2
-        self.perm_mod_12 = [i % 12 for i in self.perm]
-
-    def noise(self, xin, yin, zin, noise_scale):
-        # Point lists
-        points_xyz = []
-        points_ijk = []
-
-        # Get the skewed coordinates
-        points_ijk.append(self.skew_cell(xin, yin, zin))
-        t = (points_ijk[0].x + points_ijk[0].y +
-             points_ijk[0].z) * self.unskew_factor
-
-        # Unskew the cell back to (x, y) space
-        pt_X0_Y0_Z0 = self.unskew_cell(points_ijk[0], t)
-        points_xyz.append(
-            Point(
-                xin - pt_X0_Y0_Z0.x,
-                yin - pt_X0_Y0_Z0.y,
-                zin - pt_X0_Y0_Z0.z
-            )
-        )
-
-        # In 3D the simplex is a slightly irregular tetrahedron
-        for pt in self.determine_simplex(points_xyz[0]):
-            points_ijk.append(pt)
-
-        for pt in self.get_simplex_coords(points_xyz[0], points_ijk[1], points_ijk[2]):
-            points_xyz.append(pt)
-
-        # Hashed gradient indices of the three simplex corners
-        grad_index_hash = self.hashed_gradient_indices(points_ijk)
-
-        # Calculate the contributions from the three corners
-        noise_contribs = self.calc_noise_contributions(
-            grad_index_hash, points_xyz)
-
-        # Move our range to [-1, 1]
-        return noise_scale * sum(noise_contribs)
-
-    def skew_cell(self, xin, yin, zin):
-        """ Skew the input space and determine which simplex we are in """
-        skew = (xin + yin + zin) * self.skew_factor
-        i = int(math.floor(xin + skew))
-        j = int(math.floor(yin + skew))
-        k = int(math.floor(zin + skew))
-
-        return Point(i, j, k)
-
-    def unskew_cell(self, pt, t):
-        """ Return to (x,y) space """
-        return Point(pt.x - t, pt.y - t, pt.z - t)
-
-    def determine_simplex(self, pt):
-        if pt.x >= pt.y:
-            if pt.y >= pt.z:
-                return (Point(1, 0, 0), Point(1, 1, 0))
-            elif pt.x >= pt.z:
-                return (Point(1, 0, 0), Point(1, 0, 1))
-            else:
-                return (Point(0, 0, 1), Point(1, 0, 1))
-        else:
-            if pt.y < pt.z:
-                return (Point(0, 0, 1), Point(0, 1, 1))
-            elif pt.x < pt.z:
-                return (Point(0, 1, 0), Point(0, 1, 1))
-            else:
-                return (Point(0, 1, 0), Point(1, 1, 0))
-
-    def get_simplex_coords(self, pt, pt_ijk_1, pt_ijk_2):
-        x1 = pt.x - pt_ijk_1.x + self.unskew_factor
-        y1 = pt.y - pt_ijk_1.y + self.unskew_factor
-        z1 = pt.z - pt_ijk_1.z + self.unskew_factor
-
-        x2 = pt.x - pt_ijk_2.x + 2.0 * self.unskew_factor
-        y2 = pt.y - pt_ijk_2.y + 2.0 * self.unskew_factor
-        z2 = pt.z - pt_ijk_2.z + 2.0 * self.unskew_factor
-
-        # Last corners in skewed coords
-        x3 = pt.x - 1.0 + 3.0 * self.unskew_factor
-        y3 = pt.y - 1.0 + 3.0 * self.unskew_factor
-        z3 = pt.z - 1.0 + 3.0 * self.unskew_factor
-
-        return (Point(x1, y1, z1), Point(x2, y2, z2), Point(x3, y3, z3))
-
-    def hashed_gradient_indices(self, points_ijk):
-        ii = points_ijk[0].x & 255
-        jj = points_ijk[0].y & 255
-        kk = points_ijk[0].z & 255
-
-        return (
-            self.perm_mod_12[ii + self.perm[jj + self.perm[kk]]],
-            self.perm_mod_12[ii + points_ijk[1].x + self.perm[jj +
-                                                              points_ijk[1].y + self.perm[kk + points_ijk[1].z]]],
-            self.perm_mod_12[ii + points_ijk[2].x + self.perm[jj +
-                                                              points_ijk[2].y + self.perm[kk + points_ijk[2].z]]],
-            self.perm_mod_12[ii + 1 + self.perm[jj + 1 + self.perm[kk + 1]]]
-        )
-
-    def calc_noise_contributions(self, grad_index_hash, points_xyz):
-        """ Calculates the contribution from each corner (in 2D there are three!) """
-        contribs = []
-        for i in xrange(len(grad_index_hash)):
-            x = points_xyz[i].x
-            y = points_xyz[i].y
-            z = points_xyz[i].z
-            grad = self.grads[grad_index_hash[i]]
-            t = 0.6 - x * x - y * y - z * z
-
-            if t < 0:
-                contribs.append(0)
-            else:
-                t *= t
-                contribs.append(t * t * grad.dot(x, y, z))
 
         return contribs
